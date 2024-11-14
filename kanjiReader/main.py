@@ -5,6 +5,7 @@ from PIL import Image
 #pip install manga_ocr
 from manga_ocr import MangaOcr
 
+from tkinter import *
 
 def translate( text ):
 
@@ -27,8 +28,30 @@ def textFromImage( img ):
 
 def main():
 
-    #text = "今日はいい天気ですね"
+    app = Tk(baseName='Kanji Reader')
 
+    menuApp = Menu(app)
+
+    app.config(menu=menuApp)
+
+    inputMenu = Menu(menuApp)
+    menuApp.add_cascade(label='Input', menu = inputMenu)
+
+    inputMenu.add_command(label='Write')
+    inputMenu.add_command(label='Read from image')
+    inputMenu.add_separator()
+    inputMenu.add_command(label='Exit', command=app.quit)
+
+
+    Label(app, text='Text to translate').grid(row=0)
+    entry = Entry( app )
+    entry.grid(row=1)
+    button = Button( app, text='Translate', width=25, command=app.destroy )
+    button.grid(row=2)
+
+    mainloop()
+    #text = "今日はいい天気ですね"
+'''
     image = r"files/images/test.png"
 
     textImg = textFromImage( image )
@@ -36,7 +59,7 @@ def main():
     print( textImg )
 
     print( translate( textImg ) )
-
+'''
 
 if __name__ == "__main__":
 
