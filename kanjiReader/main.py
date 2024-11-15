@@ -1,12 +1,16 @@
-#pip install transformers torch sentencepiece sacremoses
+#pip install transformers torch sentencepiece sacremoses #( cpu only configuration )
 from transformers import AutoTokenizer, MarianMTModel
 #pip install pillow
 from PIL import Image
 #pip install manga_ocr
 from manga_ocr import MangaOcr
-
+#pip install pykakasi
+import pykakasi
+#if not installed check how to install python-tk on your system
 from tkinter import *
 
+
+#Might change for more accurate translation model
 def translate( text ):
 
     model = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
@@ -26,10 +30,23 @@ def textFromImage( img ):
     return mocr( Image.open( img ).convert("RGB") )
 
 
+def convertKana( text ):
+
+    kks = pykakasi.kakasi() 
+
+    return kks.convert( text )
+
+
 def main():
 
-    app = Tk(baseName='Kanji Reader')
+    kks = pykakasi.kakasi()
 
+    app = Tk()
+
+    app.title("Kanji Reader")
+
+    '''
+    #Gui Stuff
     menuApp = Menu(app)
 
     app.config(menu=menuApp)
@@ -42,16 +59,23 @@ def main():
     inputMenu.add_separator()
     inputMenu.add_command(label='Exit', command=app.quit)
 
+    frame = Frame(app, height=100, width=200)
 
-    Label(app, text='Text to translate').grid(row=0)
-    entry = Entry( app )
+    frame.grid(row=1, column=1)
+
+    Label(frame, text='Text to translate').grid(row=0)
+    entry = Entry( frame )
     entry.grid(row=1)
-    button = Button( app, text='Translate', width=25, command=app.destroy )
+    button = Button( frame, text='Translate', width=25, command=frame.destroy )
     button.grid(row=2)
 
     mainloop()
-    #text = "今日はいい天気ですね"
 '''
+
+    #OCR + Translation + Conversion stuff
+
+    text = "今日はいい天気ですね"
+    '''
     image = r"files/images/test.png"
 
     textImg = textFromImage( image )
@@ -60,6 +84,14 @@ def main():
 
     print( translate( textImg ) )
 '''
+
+    result = convertKana( text )
+
+    for item in result:
+
+        print("{}: kana '{}', hiragana '{}', romaji: '{}'".format(item['orig'], item['kana'], item['hira'], item['hepburn']))
+
+
 
 if __name__ == "__main__":
 
