@@ -1,51 +1,23 @@
-#pip install transformers torch sentencepiece sacremoses #( cpu only configuration )
-from transformers import AutoTokenizer, MarianMTModel
-#pip install pillow
-import PIL.Image
-#pip install manga_ocr
-from manga_ocr import MangaOcr
-#pip install pykakasi
-import pykakasi
-#if not installed check how to install python-tk on your system
+'''
+installation commands, make sure to run them on your virtual enviroment.:
+    pip install transformers torch sentencepiece sacremoses #( cpu only configuration )
+    pip install pillow
+    pip install manga_ocr
+    pip install pykakasi
+'''
+
 from tkinter import *
-
-
-#Might change for more accurate translation model
-def translate( text ):
-
-    model = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
-    tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
-
-    batch = tokenizer( [text], return_tensors="pt" )
-
-    generated_ids = model.generate( **batch )
-
-    return tokenizer.batch_decode( generated_ids, skip_special_tokens=True )[0]
-
-
-def textFromImage( img ):
-
-    mocr = MangaOcr()
-
-    return mocr( PIL.Image.open( img ).convert("RGB") )
-
-
-def convertKana( text ):
-
-    kks = pykakasi.kakasi() 
-
-    return kks.convert( text )
+#if not installed check how to install python-tk on your system
+from models import Models
 
 
 def main():
-
-    kks = pykakasi.kakasi()
 
     app = Tk()
 
     app.title("Kanji Reader")
 
-    
+    '''
     #Gui Stuff
     menuApp = Menu(app)
 
@@ -70,25 +42,28 @@ def main():
     button.grid(row=2)
 
     mainloop()
-
+'''
     #OCR + Translation + Conversion stuff
     
     text = "今日はいい天気ですね"
     
     imageInput = r"files/images/test.png"
 
-    textImg = textFromImage( imageInput )
+    models = Models()
+
+    textImg = models.textFromImage( imageInput )
 
     print( textImg )
 
-    print( translate( text ) )
+    print( text )
 
-    result = convertKana( text )
+    print( models.translate( text ) )
+
+    result = models.convertKana( text )
 
     for item in result:
 
         print("{}: kana '{}', hiragana '{}', romaji: '{}'".format(item['orig'], item['kana'], item['hira'], item['hepburn']))
-
 
 
 if __name__ == "__main__":
