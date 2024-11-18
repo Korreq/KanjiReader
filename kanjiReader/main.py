@@ -1,7 +1,7 @@
 #pip install transformers torch sentencepiece sacremoses #( cpu only configuration )
 from transformers import AutoTokenizer, MarianMTModel
 #pip install pillow
-from PIL import Image
+import PIL.Image
 #pip install manga_ocr
 from manga_ocr import MangaOcr
 #pip install pykakasi
@@ -27,7 +27,7 @@ def textFromImage( img ):
 
     mocr = MangaOcr()
 
-    return mocr( Image.open( img ).convert("RGB") )
+    return mocr( PIL.Image.open( img ).convert("RGB") )
 
 
 def convertKana( text ):
@@ -45,7 +45,7 @@ def main():
 
     app.title("Kanji Reader")
 
-    '''
+    
     #Gui Stuff
     menuApp = Menu(app)
 
@@ -70,20 +70,18 @@ def main():
     button.grid(row=2)
 
     mainloop()
-'''
 
     #OCR + Translation + Conversion stuff
-
+    
     text = "今日はいい天気ですね"
-    '''
-    image = r"files/images/test.png"
+    
+    imageInput = r"files/images/test.png"
 
-    textImg = textFromImage( image )
+    textImg = textFromImage( imageInput )
 
     print( textImg )
 
-    print( translate( textImg ) )
-'''
+    print( translate( text ) )
 
     result = convertKana( text )
 
