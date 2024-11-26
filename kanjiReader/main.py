@@ -51,7 +51,7 @@ def main():
 
     models = Models()
 
-    textImg = models.textFromImage( imageInput )
+    textImg = models.text_from_image( imageInput )
 
     print( textImg )
 
@@ -59,11 +59,13 @@ def main():
 
     print( models.translate( text ) )
 
-    result = models.convertKana( text )
+    result = models.convert_kana( text )
 
     for item in result:
 
-        print("{}: kana '{}', hiragana '{}', romaji: '{}'".format(item['orig'], item['kana'], item['hira'], item['hepburn']))
+        print( item )
+
+        #print("{}: kana '{}', hiragana '{}', romaji: '{}'".format(item['orig'], item['kana'], item['hira'], item['hepburn']))
 
 
 if __name__ == "__main__":
