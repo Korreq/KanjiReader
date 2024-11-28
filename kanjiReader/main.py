@@ -4,21 +4,25 @@ installation commands, make sure to run them on your virtual enviroment.:
     pip install pillow
     pip install manga_ocr
     pip install pykakasi
+    pip install pyautogui
 '''
 
 from tkinter import *
 #if not installed check how to install python-tk on your system
 from models import Models
-
+import pyautogui
 
 def main():
 
+    image = pyautogui.screenshot("files/images/screen.png")
+
+    '''
+    #Gui Stuff
     app = Tk()
 
     app.title("Kanji Reader")
 
-    '''
-    #Gui Stuff
+    
     menuApp = Menu(app)
 
     app.config(menu=menuApp)
@@ -44,13 +48,13 @@ def main():
     mainloop()
 '''
     #OCR + Translation + Conversion stuff
-    
+    '''
     text = "今日はいい天気ですね"
     
     imageInput = r"files/images/test.png"
 
     models = Models()
-
+    
     textImg = models.text_from_image( imageInput )
 
     print( textImg )
@@ -66,7 +70,7 @@ def main():
         print( item )
 
         #print("{}: kana '{}', hiragana '{}', romaji: '{}'".format(item['orig'], item['kana'], item['hira'], item['hepburn']))
-
+    '''
 
 if __name__ == "__main__":
 
