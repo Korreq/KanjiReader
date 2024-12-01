@@ -1,19 +1,30 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from models import Models
 
 def translate_text():
+
+    models = Models()
+
     input_text = text_entry.get("1.0", tk.END).strip()
-    # Tu wstaw model tłumaczenia gnojku
-    translated_text = f"Tłumaczenie: {input_text}"
+    # model tłumaczenia
+    translated_text = f"Tłumaczenie: { models.translate( input_text ) }"
     translation_label.config(text=translated_text)
 
 def upload_image():
+
+    models = Models()
+
     file_path = filedialog.askopenfilename()
     if file_path:
         # Tu wstaw logikę wysyłania zdjęcia do back-endu
-        translated_text = "UwU"
+
+        input_text = models.text_from_image( file_path )
+
+        translated_text = f"Tłumaczenie: { models.translate( input_text ) }"
         #messagebox.showinfo("Sukces", f"Zdjęcie zostało wysłane: {file_path}")
         translation_photo_label.config(text=translated_text)
+
 
 
 #Tworzenie głównego okna
