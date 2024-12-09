@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from kanji_reader.models import Models
-
+import pyautogui
 
 class TranslationApp:
     def __init__(self, root):
@@ -15,14 +15,17 @@ class TranslationApp:
         tab_control = ttk.Notebook(self.root)
         self.tab1 = ttk.Frame(tab_control)
         self.tab2 = ttk.Frame(tab_control)
+        self.tab3 = ttk.Frame(tab_control)
 
+    
         tab_control.add(self.tab1, text='Text Translation')
         tab_control.add(self.tab2, text='Image Translation')
+        tab_control.add(self.tab3, text='Screenshot Translation')
         tab_control.pack(expand=1, fill='both')
 
         self.setup_text_tab()
         self.setup_image_tab()
-
+        self.setup_screenshot_tab()
     def setup_text_tab(self):
         self.text_entry = tk.Text(self.tab1, height=10, width=50)
         self.text_entry.pack(pady=10)
@@ -37,6 +40,12 @@ class TranslationApp:
         self.translation_photo_label = tk.Label(self.tab2, text="")
         self.translation_photo_label.pack(pady=10)
 
+    def setup_screenshot_tab(self):
+        take_screenshot_button = tk.Button(self.tab3, text="Take Screenshot", command=self.take_screenshot)
+        take_screenshot_button.pack(pady=20)
+        self.translation_screenshot_label = tk.Label(self.tab3, text="")
+        self.translation_screenshot_label.pack(pady=10)
+
     def translate_text(self):
         input_text = self.text_entry.get("1.0", tk.END).strip()
         translated_text = f"Translation: {self.models.translate(input_text)}"
@@ -48,3 +57,10 @@ class TranslationApp:
             input_text = self.models.text_from_image(file_path)
             translated_text = f"Translation: {self.models.translate(input_text)}"
             self.translation_photo_label.config(text=translated_text)
+
+    def take_screenshot(self):
+        image = pyautogui.screenshot()
+        image.save("files/images/screenshot.png")
+        input_text = self.models.text_from_image("screenshot.png")
+        translated_text = f"Translation: {self.models.translate(input_text)}"
+        self.translation_screenshot_label.config(text=translated_text)

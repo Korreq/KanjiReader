@@ -1,17 +1,17 @@
 '''
 If you are missing some modules, check setup.py file
+
+If your terminal don't see kanji_reader package, run main by this command: 
+python -m kanji_reader.main
 '''
 
-import pyautogui
 import tkinter as tk
-from kanji_reader.gui import TranslationApp
+from .gui import TranslationApp
 
 def main():
     root = tk.Tk()
     app = TranslationApp(root)
     root.mainloop()
-
-    #image = pyautogui.screenshot("files/images/screen.png")
 
 if __name__ == "__main__":
     main()
