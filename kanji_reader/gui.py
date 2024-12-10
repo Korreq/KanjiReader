@@ -1,13 +1,16 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from kanji_reader.models import Models
+from .models import Models
+from .history import TranslationHistory
 import pyautogui
 
 class TranslationApp:
     def __init__(self, root):
         self.root = root
         self.models = Models()
+        self.history = TranslationHistory()
         self.setup_gui()
+        
 
     def setup_gui(self):
         self.root.title("Translation App")
@@ -50,6 +53,7 @@ class TranslationApp:
         input_text = self.text_entry.get("1.0", tk.END).strip()
         translated_text = f"Translation: {self.models.translate(input_text)}"
         self.translation_label.config(text=translated_text)
+        self.history.save_translation(input_text, translated_text)
 
     def upload_image(self):
         file_path = filedialog.askopenfilename()
@@ -57,6 +61,7 @@ class TranslationApp:
             input_text = self.models.text_from_image(file_path)
             translated_text = f"Translation: {self.models.translate(input_text)}"
             self.translation_photo_label.config(text=translated_text)
+            self.history.save_translation(input_text, translated_text)
 
     def take_screenshot(self):
         image = pyautogui.screenshot()
@@ -64,3 +69,4 @@ class TranslationApp:
         input_text = self.models.text_from_image("screenshot.png")
         translated_text = f"Translation: {self.models.translate(input_text)}"
         self.translation_screenshot_label.config(text=translated_text)
+        self.history.save_translation(input_text, translated_text)
