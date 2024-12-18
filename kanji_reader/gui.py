@@ -13,7 +13,7 @@ class TranslationApp:
         
 
     def setup_gui(self):
-        self.root.title("Translation App")
+        self.root.title("Kanji Reader")
 
         tab_control = ttk.Notebook(self.root)
         self.tab1 = ttk.Frame(tab_control)
@@ -24,7 +24,7 @@ class TranslationApp:
         tab_control.add(self.tab1, text='Text Translation')
         tab_control.add(self.tab2, text='Image Translation')
         tab_control.add(self.tab3, text='Screenshot Translation')
-        tab_control.pack(expand=1, fill='both')
+        tab_control.pack(expand=2, fill='both')
 
         self.setup_text_tab()
         self.setup_image_tab()

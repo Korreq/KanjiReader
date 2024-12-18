@@ -5,6 +5,8 @@ If your terminal don't see kanji_reader package, run main by this command:
 python -m kanji_reader.main
 '''
 
+
+
 import tkinter as tk
 from .gui import TranslationApp
 

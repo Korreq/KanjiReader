@@ -14,5 +14,5 @@ class TranslationHistory:
         filename = f"{len(os.listdir(self.results_folder)) + 1}.json"
         filepath = os.path.join(self.results_folder, filename)
 
-        with open(filepath, "w") as f:
-            json.dump({"input_text": input_text, "translated_text": translated_text}, f)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump({"input_text": input_text, "translated_text": translated_text}, f, indent=4, ensure_ascii=False)

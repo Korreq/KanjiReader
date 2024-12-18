@@ -4,7 +4,7 @@ Rzeczy do zrobienia:
 -Screen capture jako wycinek okna
 -Zapis tłumaczeń do pliku
 -Wielowątkowość 
--Kompatybilność z linuxem i windowsem
+-Kompatybilność z linuxem i windowsem ( O )
 -Historia tłumaczeń
 -Zmienienie modeli, aby każdy był z transformersów
 -Zwracanie paru prawdopodobnych tłumaczeń/przełożeń
