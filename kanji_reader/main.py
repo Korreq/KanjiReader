@@ -6,13 +6,12 @@ python -m kanji_reader.main
 '''
 
 
-
 import tkinter as tk
 from .gui import TranslationApp
 
 def main():
     root = tk.Tk()
-    app = TranslationApp(root)
+    TranslationApp(root)
     root.mainloop()
 
 if __name__ == "__main__":
