@@ -1,14 +1,24 @@
 from transformers import (
-    MarianMTModel, AutoTokenizer, AutoModelForSeq2SeqLM,
+    MarianMTModel, AutoTokenizer, AutoModelForSeq2SeqLM, pipeline,
     VisionEncoderDecoderModel, AutoFeatureExtractor,
-    BlipForConditionalGeneration, BlipProcessor,
-    M2M100ForConditionalGeneration, M2M100Tokenizer, T5Tokenizer, T5ForConditionalGeneration
+    BlipForConditionalGeneration, BlipProcessor, AutoModel,
+    M2M100ForConditionalGeneration, M2M100Tokenizer, T5Tokenizer, T5ForConditionalGeneration,
+    MBartForConditionalGeneration, MBart50TokenizerFast
 )
+
+from sklearn.metrics.pairwise import cosine_similarity
 import PIL.Image
 import cv2
 import pytesseract
 import torch
 import os
+
+'''
+
+    paraphrase-multilingual-MiniLM-L12-v2 use for models semantic comparision
+
+'''
+
 
 
 class Models:
@@ -33,31 +43,43 @@ class Models:
     # ================================
 
     def translate(self, text: str) -> str:
-        """Translate Japanese to English using MarianMT."""
-        return self._translate_model(text, "Helsinki-NLP/opus-mt-ja-en")
+        """Translate Japanese to English using Helsinki-NLP/opus-mt-ja-en."""
+        model_name = "Helsinki-NLP/opus-mt-ja-en"
+        model = MarianMTModel.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def translate_nllb(self, text: str) -> str:
-        """Translate using the NLLB model."""
-        return self._translate_model(text, "facebook/nllb-200-distilled-600M", m2m_model=True)
+        batch = tokenizer([text], return_tensors="pt")
+        generated_ids = model.generate(**batch)
+        output = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        return output
+
+    def translate_small100(self, text: str) -> str:
+        """Translate Japanese to English using alirezamsh/small100."""
+        model_name = "alirezamsh/small100"
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, tgt_lang="en")
+
+        encode = tokenizer(text, return_tensors="pt")
+        generated_tokens = model.generate(**encode)
+        output = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
+        return output
 
     def translate_mbart(self, text: str) -> str:
-        """Translate using the mBART model."""
-        return self._translate_model(text, "facebook/mbart-large-50-many-to-many-mmt", m2m_model=True)
+        """Translate Japanese to English using facebook/mbart-large-50-many-to-many-mmt."""
+        model_name = "facebook/mbart-large-50-many-to-many-mmt"
+        model = MBartForConditionalGeneration.from_pretrained(model_name)
+        tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
 
-    def _translate_model(self, text: str, model_name: str, m2m_model=False) -> str:
-        """Helper method for translation with different models."""
-        if m2m_model:
-            model = M2M100ForConditionalGeneration.from_pretrained(model_name)
-            tokenizer = M2M100Tokenizer.from_pretrained(model_name)
-            inputs = tokenizer([text], return_tensors="pt", src_lang="ja")
-            outputs = model.generate(inputs["input_ids"], forced_bos_token_id=tokenizer.lang_code_to_id["en"])
-        else:
-            model = MarianMTModel.from_pretrained(model_name)
-            tokenizer = AutoTokenizer.from_pretrained(model_name)
-            batch = tokenizer([text], return_tensors="pt")
-            generated_ids = model.generate(**batch)
-            outputs = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)
-        return outputs[0]
+        tokenizer.src_lang = "ja_XX" 
+        tokenizer.tgt_lang = "en_XX" 
+
+        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=400)
+        # Generate translation
+        with torch.no_grad():
+            translated_tokens = model.generate(**inputs)
+        # Decode the translated tokens to text
+        translated_text = tokenizer.decode(translated_tokens[0], skip_special_tokens=True)
+        return translated_text
 
     # ================================
     # OCR Methods
@@ -147,3 +169,49 @@ class Models:
         input_ids = tokenizer.encode(f"{task}: {text}", return_tensors="pt")
         outputs = model.generate(input_ids)
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    # ================================
+    # Semantic Comparision
+    # ================================
+
+    def compare_semantics(self, sentences):
+        model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
+
+        encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
+        with torch.no_grad():
+            model_output = model(**encoded_input)
+
+        sentence_embeddings = self.mean_pooling( model_output, encoded_input['attention_mask'] )
+
+        sentence_embeddings = sentence_embeddings / sentence_embeddings.norm(p=2, dim=1, keepdim=True)
+
+        return sentence_embeddings
+
+    def mean_pooling(self, model_output, attention_mask):
+
+        token_embeddings = model_output[0] #First element of model_output contains all token embeddings
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+
+    def compare_embeddings(self, embedding1, embedding2):
+        # Reshape embeddings to 2D (1 sample, N dimensions) to work with cosine_similarity
+        embedding1 = embedding1.unsqueeze(0) if embedding1.dim() == 1 else embedding1
+        embedding2 = embedding2.unsqueeze(0) if embedding2.dim() == 1 else embedding2
+
+        # Compute cosine similarity between two sentence embeddings
+        cos_sim = cosine_similarity(embedding1.cpu().numpy(), embedding2.cpu().numpy())
+        return cos_sim[0][0]
+    
+    def compare_with_original(self, sentences):
+        # Get the sentence embeddings for all translations
+        embeddings = self.compare_semantics(sentences)
+
+        # Compare all pairs of translations (cosine similarity between each pair)
+        similarity_scores = {}
+        for i, translated_sentence in enumerate(sentences[1:]):
+            similarity_score = self.compare_embeddings(embeddings[0], embeddings[i + 1])  # Compare original (index 0) with each translation
+            similarity_scores[f"Original vs Translation {i+1}"] = similarity_score
+
+        return similarity_scores

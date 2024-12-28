@@ -56,6 +56,7 @@ setup(
         "protobuf", # Protocol buffers
         "fugashi",
         "unidic-lite",
+        "scikit-learn", # Only for testing
     ]
 )
 
