@@ -147,9 +147,5 @@ class TranslationApp:
         image_copy = self.image.copy()
         draw = ImageDraw.Draw(image_copy)
         draw.rectangle([self.start_x, self.start_y, self.rect[2], self.rect[3]], outline="red", width=2)
-        image_copy.save("files/images/rectangle.png")
-        self.image_tk = ImageTk.PhotoImage(file="files/images/rectangle.png")
+        self.image_tk = ImageTk.PhotoImage(image_copy)
         self.image_label = self.image_tk
-
-
-
