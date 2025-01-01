@@ -6,7 +6,9 @@ import torch
 class TestModels(unittest.TestCase):
     def setUp(self):
         self.models = Models()
-    
+
+    #Working test, commented to speed up testing    
+    '''
     def test_translate_models(self):
         text = "日本に行くのが楽しみです。"
         sentences = [
@@ -22,6 +24,11 @@ class TestModels(unittest.TestCase):
         # Output the similarity scores between each pair of translations
         for pair, score in similarity_scores.items():
             print(f"{pair}: {score:.4f}")
+    '''
+
+
+
+    #Trash code, left for future reference
     '''
     def test_convert_kana(self):
         test_sentences = [
@@ -39,6 +46,17 @@ class TestModels(unittest.TestCase):
             self.assertGreater(score, 0.9, f"Expected high similarity for {key}. Got similarity: {score}")
 
     '''
+
+    def test_convert(self):
+
+        text = "日本に行くのが楽しみです。"
+
+        # Very slow model implementation
+        output = self.models.convert_kanji_to_kana_jp(text)
+        print(text)
+        print(output)
+
+
 
 if __name__ == '__main__':
     unittest.main()

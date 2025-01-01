@@ -1,6 +1,6 @@
 from transformers import (
     MarianMTModel, AutoTokenizer, AutoModelForSeq2SeqLM, pipeline,
-    VisionEncoderDecoderModel, AutoFeatureExtractor,
+    VisionEncoderDecoderModel, AutoFeatureExtractor, AutoModelForCausalLM,
     BlipForConditionalGeneration, BlipProcessor, AutoModel,
     M2M100ForConditionalGeneration, M2M100Tokenizer, T5Tokenizer, T5ForConditionalGeneration,
     MBartForConditionalGeneration, MBart50TokenizerFast
@@ -12,6 +12,7 @@ import cv2
 import pytesseract
 import torch
 import os
+import json
 
 '''
 
@@ -124,51 +125,167 @@ class Models:
     # Kanji to Kana Conversion Methods
     # ================================
 
+    '''
+        searching for new models becuse these are bad
+
+
+        elyza/Llama-3-ELYZA-JP-8B
+        llm-jp/llm-jp-3-13b
+
+        
+        google/byt5-large
+
+    
+    '''
+
+    def convert_kanji_to_kana_elyza(self, text: str):
+        """
+        Process Kanji text and return Hiragana and Romanji in JSON format using elyza/Llama-3-ELYZA-JP-8B model.
+        """
+
+        System_prompt = (
+             "Convert the given Kanji text to Hiragana and Romanji and return only the result in JSON format. "
+            "The JSON should have two keys: 'hiragana' for the Hiragana transcription and "
+            "'romanji' for the Romanized version of the text. No other text should be included."
+        )
+
+        model_name = "elyza/Llama-3-ELYZA-JP-8B"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model.eval()
+        tokenizer.pad_token = tokenizer.eos_token
+
+        messages = [
+            {"role": "system", "content": System_prompt},
+            {"role": "user", "content": text},
+        ]
+
+        prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        token_ids = tokenizer.encode( prompt, add_special_tokens=False, return_tensors="pt" )
+
+        attention_mask = torch.ones(token_ids.shape, device=token_ids.device)
+
+        with torch.no_grad():
+            output_ids = model.generate(
+                token_ids.to(model.device),
+                attention_mask=attention_mask,
+                max_new_tokens=1024,
+                do_sample=False,
+                top_k=50,
+                top_p=None,
+                temperature=None,
+            )
+
+        output = tokenizer.decode(output_ids.tolist()[0][token_ids.size(1):], skip_special_tokens=True) + "}"
+
+        try:
+            result = json.loads(output)
+        except json.JSONDecodeError:
+            result = {
+                "hiragana": "Error: Invalid output format",
+                "romanji": "Error: Invalid output format"
+            }
+
+        print(output)
+
+        return json.dumps(result)
+
+    def convert_kanji_to_kana_jp(self, text: str):
+
+        model_name = "llm-jp/llm-jp-3-13b"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model.eval()
+
+        prompt = f"Convert the following Kanji text to Hiragana and Romanji:\n\n{text}"
+
+        
+        tokenized_input = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
+
+        attention_mask = torch.ones(tokenized_input.shape, device=tokenized_input.device)
+
+        with torch.no_grad():
+            output_id = model.generate(
+                tokenized_input,
+                attention_mask=attention_mask,
+                max_new_tokens=512,
+                do_sample=True,
+                top_p=0.95,
+                temperature=0.7,
+                repetition_penalty=1.05,
+
+            )[0]
+
+        output = tokenizer.decode(output_id)
+
+        return output
+
     def convert_kana(self, text: str):
         """Convert Kanji to Hiragana and Romanji."""
-        return self._convert_kana_with_model(text, "Miwa-Keita/zenz-v2-gguf")
+        model_name = "Miwa-Keita/zenz-v2-gguf"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        outputs = model.generate(**inputs)
+        hiragana_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        outputs = model.generate(**inputs)
+        romanji_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return hiragana_text, romanji_text
 
     def convert_kana_byt5(self, text: str):
         """Convert Kanji to Hiragana and Romanji using ByT5."""
-        return self._convert_kana_with_model_byt5(text)
 
-    def convert_kana_gemma(self, text: str):
-        """Convert Kanji to Hiragana and Romanji using Gemma."""
-        return self._convert_kana_with_model_gemma(text)
+        model = T5ForConditionalGeneration.from_pretrained('google/byt5-large')
 
-    def _convert_kana_with_model(self, text: str, model_name: str):
-        """Helper method for Kanji to Kana conversion."""
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        inputs = tokenizer(text, return_tensors="pt")
-        outputs = model(**inputs)
-        hiragana_text = tokenizer.convert_ids_to_tokens(outputs[0].argmax(-1))[0]
-        romanji_text = hiragana_text.translate(str.maketrans('', '', ''))  # Remove non-roman characters
-        return hiragana_text, romanji_text
+        input_ids = torch.tensor([list("Life is like a box of chocolates.".encode("utf-8"))]) + 3  # add 3 for special tokens
+        labels = torch.tensor([list("La vie est comme une boîte de chocolat.".encode("utf-8"))]) + 3  # add 3 for special tokens
 
-    def _convert_kana_with_model_byt5(self, text: str):
-        """Helper method for Kanji to Kana conversion using ByT5."""
-        return self._convert_kana_with_t5("google/byt5-small", text)
+        loss = model(input_ids, labels=labels).loss # forward pass
 
-    def _convert_kana_with_model_gemma(self, text: str):
-        """Helper method for Kanji to Kana conversion using Gemma."""
-        return self._convert_kana_with_t5("google/gemma-2-2b-jpn-it", text)
 
-    def _convert_kana_with_t5(self, model_name: str, text: str):
-        """General method for Kanji to Kana conversion using T5-based models."""
+        model_name = "google/byt5-small"
         tokenizer = T5Tokenizer.from_pretrained(model_name)
         model = T5ForConditionalGeneration.from_pretrained(model_name)
 
-        hiragana_text = self._generate_kana_output(tokenizer, model, "kanji_to_hiragana", text)
-        romanji_text = self._generate_kana_output(tokenizer, model, "kanji_to_romanji", text)
+        prompt = f"Convert following Kanji text to Hiragana and Romanji:\n\n{text}"
 
-        return hiragana_text, romanji_text
+        inputs = tokenizer.encode(prompt, return_tensors="pt", truncation=True, padding=True)  
 
-    def _generate_kana_output(self, tokenizer, model, task: str, text: str):
-        """Generate Kana (Hiragana or Romanji) using the provided model."""
-        input_ids = tokenizer.encode(f"{task}: {text}", return_tensors="pt")
-        outputs = model.generate(input_ids)
-        return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        outputs = model.generate(
+            **inputs,
+            max_length=1024, num_beams=5, early_stopping=True
+        )
+
+        result = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        return result
+
+    def convert_kana_gemma(self, text: str):
+        """Convert Kanji to Hiragana and Romanji using Gemma."""
+        pipe = pipeline(
+            "text-generation",
+            model="google/gemma-2-2b-jpn-it",
+            model_kwargs={"torch_dtype": torch.float16},
+            device=0
+        )
+
+        input_text_prompt = f"Convert following text from Kanji to Hiragana:\n\n{text}"
+        messages = [
+            {"role": "user", "content": input_text_prompt},
+        ]
+
+        outputs = pipe(messages, return_full_text=False, max_new_tokens=1024)
+        hiragana_response = outputs[0]["generated_text"].strip()
+        
+        input_text_prompt = f"Convert following text from Kanji to Romanji:\n\n{text}"
+        messages = [
+            {"role": "user", "content": input_text_prompt},
+        ]
+        
+        outputs = pipe(messages, return_full_text=False, max_new_tokens=1024)
+        romanji_response = outputs[0]["generated_text"].strip()
+
+        return hiragan_response, romanji_response
 
     # ================================
     # Semantic Comparision
