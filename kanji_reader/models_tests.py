@@ -46,17 +46,23 @@ class TestModels(unittest.TestCase):
             self.assertGreater(score, 0.9, f"Expected high similarity for {key}. Got similarity: {score}")
 
     '''
-
+   
     def test_convert(self):
 
         text = "日本に行くのが楽しみです。"
 
-        # Very slow model implementation
-        output = self.models.convert_kanji_to_kana_jp(text)
+        output = self.models.convert_kanji_to_kana_pykakasi(text)
         print(text)
         print(output)
-
-
+    
+    '''
+    def test_text_from_image(self):
+        picture = "/home/yoga/Documents/Github/KanjiReader/files/images/test2.png"
+        #text_mangaocr = self.models.text_from_image(picture)
+        #text_blip = self.models.text_from_image_blip(picture)
+        text_got = self.models.text_from_image_got(picture)
+        print(text_got)
+    '''
 
 if __name__ == '__main__':
     unittest.main()

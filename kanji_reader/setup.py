@@ -57,6 +57,10 @@ setup(
         "fugashi",
         "unidic-lite",
         "scikit-learn", # Only for testing
+        "pykakasi",
+        "tiktoken",
+        "torchvision",
+        "verovio",
     ]
 )
 

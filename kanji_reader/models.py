@@ -12,15 +12,7 @@ import cv2
 import pytesseract
 import torch
 import os
-import json
-
-'''
-
-    paraphrase-multilingual-MiniLM-L12-v2 use for models semantic comparision
-
-'''
-
-
+import pykakasi
 
 class Models:
     """Handles all model-related tasks, including translation, OCR, and Kanji to Kana conversion."""
@@ -94,22 +86,18 @@ class Models:
         tokenizer = AutoTokenizer.from_pretrained("kha-white/manga-ocr-base")
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-    def text_from_image_blip(self, picture: str) -> str:
-        """Extract text using the BLIP model."""
-        return self._extract_text_from_image_blip(picture)
-
+    #Need to have older version of python to run it
     def text_from_image_got(self, picture: str) -> str:
-        """Extract text using Tesseract OCR."""
-        return self._extract_text_from_image_got(picture)
+      
+        tokenizer = AutoTokenizer.from_pretrained('ucaslcl/GOT-OCR2_0', trust_remote_code=True)
+        model = AutoModel.from_pretrained('ucaslcl/GOT-OCR2_0', trust_remote_code=True, low_cpu_mem_usage=True, use_safetensors=True, pad_token_id=tokenizer.eos_token_id)
+        model = model.eval()
 
-    def _extract_text_from_image_blip(self, picture: str) -> str:
-        """Helper method for extracting text with the BLIP model."""
-        image = PIL.Image.open(picture)
-        inputs = self._blip_processor(images=image, return_tensors="pt")
-        outputs = self._blip_model.generate(**inputs)
-        caption = self._blip_processor.batch_decode(outputs, skip_special_tokens=True)[0]
-        return caption
+        output = model.chat(tokenizer, picture, ocr_type='ocr')
 
+        return output
+
+    '''
     def _extract_text_from_image_got(self, picture: str) -> str:
         """Helper method for extracting text using Tesseract OCR."""
         image = cv2.imread(picture)
@@ -120,33 +108,20 @@ class Models:
         text = pytesseract.image_to_string(PIL.Image.open(temp_file))
         os.remove(temp_file)
         return text
-
+    '''
     # ================================
     # Kanji to Kana Conversion Methods
     # ================================
 
-    '''
-        searching for new models becuse these are bad
-
-
-        elyza/Llama-3-ELYZA-JP-8B
-        llm-jp/llm-jp-3-13b
-
-        
-        google/byt5-large
-
-    
-    '''
-
     def convert_kanji_to_kana_elyza(self, text: str):
         """
-        Process Kanji text and return Hiragana and Romanji in JSON format using elyza/Llama-3-ELYZA-JP-8B model.
+        Process Kanji text and return Hiragana and Romanji using elyza/Llama-3-ELYZA-JP-8B model.
         """
 
         System_prompt = (
-             "Convert the given Kanji text to Hiragana and Romanji and return only the result in JSON format. "
-            "The JSON should have two keys: 'hiragana' for the Hiragana transcription and "
-            "'romanji' for the Romanized version of the text. No other text should be included."
+            "Convert the given Kanji text to Hiragana and Romanji and return only the result"
+            "First output should be the Hiragana version of the text."
+            "Second output should be Romanji version of the text. No other text should be included."
         )
 
         model_name = "elyza/Llama-3-ELYZA-JP-8B"
@@ -160,7 +135,7 @@ class Models:
             {"role": "user", "content": text},
         ]
 
-        prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        prompt = tokenizer.apply_chat_template( messages, tokenize=False, add_generation_prompt=True )
         token_ids = tokenizer.encode( prompt, add_special_tokens=False, return_tensors="pt" )
 
         attention_mask = torch.ones(token_ids.shape, device=token_ids.device)
@@ -178,88 +153,26 @@ class Models:
 
         output = tokenizer.decode(output_ids.tolist()[0][token_ids.size(1):], skip_special_tokens=True) + "}"
 
-        try:
-            result = json.loads(output)
-        except json.JSONDecodeError:
-            result = {
-                "hiragana": "Error: Invalid output format",
-                "romanji": "Error: Invalid output format"
-            }
+        
 
         print(output)
 
-        return json.dumps(result)
-
-    def convert_kanji_to_kana_jp(self, text: str):
-
-        model_name = "llm-jp/llm-jp-3-13b"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name)
-        model.eval()
-
-        prompt = f"Convert the following Kanji text to Hiragana and Romanji:\n\n{text}"
-
-        
-        tokenized_input = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
-
-        attention_mask = torch.ones(tokenized_input.shape, device=tokenized_input.device)
-
-        with torch.no_grad():
-            output_id = model.generate(
-                tokenized_input,
-                attention_mask=attention_mask,
-                max_new_tokens=512,
-                do_sample=True,
-                top_p=0.95,
-                temperature=0.7,
-                repetition_penalty=1.05,
-
-            )[0]
-
-        output = tokenizer.decode(output_id)
-
         return output
 
-    def convert_kana(self, text: str):
-        """Convert Kanji to Hiragana and Romanji."""
-        model_name = "Miwa-Keita/zenz-v2-gguf"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-        outputs = model.generate(**inputs)
-        hiragana_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        outputs = model.generate(**inputs)
-        romanji_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return hiragana_text, romanji_text
+    def convert_kanji_to_kana_pykakasi(self, text: str):
 
-    def convert_kana_byt5(self, text: str):
-        """Convert Kanji to Hiragana and Romanji using ByT5."""
+        kks = pykakasi.kakasi()
+        result = kks.convert(text)
 
-        model = T5ForConditionalGeneration.from_pretrained('google/byt5-large')
+        hiragana = romanji = ""
 
-        input_ids = torch.tensor([list("Life is like a box of chocolates.".encode("utf-8"))]) + 3  # add 3 for special tokens
-        labels = torch.tensor([list("La vie est comme une boîte de chocolat.".encode("utf-8"))]) + 3  # add 3 for special tokens
+        for item in result:
+            hiragana += item['hira'] + " "
+            romanji += item['hepburn'] + " "
+            
+        return hiragana, romanji
 
-        loss = model(input_ids, labels=labels).loss # forward pass
-
-
-        model_name = "google/byt5-small"
-        tokenizer = T5Tokenizer.from_pretrained(model_name)
-        model = T5ForConditionalGeneration.from_pretrained(model_name)
-
-        prompt = f"Convert following Kanji text to Hiragana and Romanji:\n\n{text}"
-
-        inputs = tokenizer.encode(prompt, return_tensors="pt", truncation=True, padding=True)  
-
-        outputs = model.generate(
-            **inputs,
-            max_length=1024, num_beams=5, early_stopping=True
-        )
-
-        result = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-        return result
-
+    #Requires authentication
     def convert_kana_gemma(self, text: str):
         """Convert Kanji to Hiragana and Romanji using Gemma."""
         pipe = pipeline(
@@ -292,6 +205,7 @@ class Models:
     # ================================
 
     def compare_semantics(self, sentences):
+
         model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModel.from_pretrained(model_name)
