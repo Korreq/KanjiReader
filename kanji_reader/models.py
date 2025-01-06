@@ -3,7 +3,7 @@ from transformers import (
     VisionEncoderDecoderModel, AutoFeatureExtractor, AutoModelForCausalLM,
     BlipForConditionalGeneration, BlipProcessor, AutoModel,
     M2M100ForConditionalGeneration, M2M100Tokenizer, T5Tokenizer, T5ForConditionalGeneration,
-    MBartForConditionalGeneration, MBart50TokenizerFast
+    MBartForConditionalGeneration, MBart50TokenizerFast, AutoModelForTokenClassification, ViTImageProcessor
 )
 
 from sklearn.metrics.pairwise import cosine_similarity
@@ -17,19 +17,63 @@ import pykakasi
 class Models:
     """Handles all model-related tasks, including translation, OCR, and Kanji to Kana conversion."""
 
-    def __init__(self):
-        # Initialize translation models
-        self._translator = MarianMTModel.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
-        self._tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+    def __init__(self, test=False):
+       
+        # Initialize translation model for main app
+        self._translator_model_opus_mt = AutoModelForSeq2SeqLM.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+        self._translator_tokenizer_opus_mt = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
 
-        # Initialize OCR models
-        self._ocr_model = VisionEncoderDecoderModel.from_pretrained("kha-white/manga-ocr-base")
-        self._ocr_feature_extractor = AutoFeatureExtractor.from_pretrained("kha-white/manga-ocr-base")
-        self._blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-large")
-        self._blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
+        # Initialize OCR model for main app
+        self._ocr_model_manga_ocr = VisionEncoderDecoderModel.from_pretrained("kha-white/manga-ocr-base")
+        self._ocr_image_processor_manga_ocr = ViTImageProcessor.from_pretrained("kha-white/manga-ocr-base")
+        self._ocr_tokenizer_manga_ocr = AutoTokenizer.from_pretrained("kha-white/manga-ocr-base")
 
-        # Tesseract for generic OCR
-        self._got_model = pytesseract
+        if test:
+            # Initialize translation models
+
+            ''' Left it here, if we wanted to use another model in main app
+            # Helsinki-NLP/opus-mt-ja-en
+            self._translator_model_opus_mt = AutoModel.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+            self._translator_tokenizer_opus_mt = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-ja-en")
+            #'''
+
+            # alirezamsh/small100
+            self._translator_small100 = AutoModelForSeq2SeqLM.from_pretrained("alirezamsh/small100")
+            self._tokenizer_small100 = AutoTokenizer.from_pretrained("alirezamsh/small100", tgt_lang="en")
+
+            # facebook/mbart-large-50-many-to-many-mmt
+            self._translator_mbart = MBartForConditionalGeneration.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
+            self._tokenizer_mbart = MBart50TokenizerFast.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
+
+
+            # Initialize OCR models
+
+            ''' Left it here, if we wanted to use another model in main app
+            # kha-white/manga-ocr-base
+            self._ocr_model_manga_ocr = VisionEncoderDecoderModel.from_pretrained("kha-white/manga-ocr-base")
+            self._ocr_image_processor_manga_ocr = AutoFeatureExtractor.from_pretrained("kha-white/manga-ocr-base")
+            self._ocr_tokenizer_manga_ocr = AutoTokenizer.from_pretrained("kha-white/manga-ocr-base")
+            #'''
+
+            # srimanth-d/GOT_CPU
+            self._ocr_tokenizer_got = AutoTokenizer.from_pretrained("srimanth-d/GOT_CPU", trust_remote_code=True)
+            self._ocr_model_got = AutoModel.from_pretrained("srimanth-d/GOT_CPU", trust_remote_code=True, use_safetensors=True, pad_token_id=self._ocr_tokenizer_got.eos_token_id)
+
+            # Initialize Kanji to Kana conversion model
+
+            # elyza/Llama-3-ELYZA-JP-8B
+            self._converter_model_elyza = AutoModelForCausalLM.from_pretrained("elyza/Llama-3-ELYZA-JP-8B")
+            self._converter_tokenizer_elyza = AutoTokenizer.from_pretrained("elyza/Llama-3-ELYZA-JP-8B")
+
+            # pykakasi
+            self._kakasi = pykakasi.kakasi()
+
+
+            # Initialize semantic similarity model
+
+            # sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+            self._similarity_model_minilm = AutoModel.from_pretrained("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+            self._similarity_tokenizer_minilm = AutoTokenizer.from_pretrained("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
     # ================================
     # Translation Methods
@@ -37,9 +81,8 @@ class Models:
 
     def translate(self, text: str) -> str:
         """Translate Japanese to English using Helsinki-NLP/opus-mt-ja-en."""
-        model_name = "Helsinki-NLP/opus-mt-ja-en"
-        model = MarianMTModel.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = self._translator_model_opus_mt
+        tokenizer = self._translator_tokenizer_opus_mt
 
         batch = tokenizer([text], return_tensors="pt")
         generated_ids = model.generate(**batch)
@@ -48,10 +91,9 @@ class Models:
 
     def translate_small100(self, text: str) -> str:
         """Translate Japanese to English using alirezamsh/small100."""
-        model_name = "alirezamsh/small100"
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-        tokenizer = AutoTokenizer.from_pretrained(model_name, tgt_lang="en")
-
+        model = self._translator_small100
+        tokenizer = self._tokenizer_small100
+        
         encode = tokenizer(text, return_tensors="pt")
         generated_tokens = model.generate(**encode)
         output = tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
@@ -59,9 +101,8 @@ class Models:
 
     def translate_mbart(self, text: str) -> str:
         """Translate Japanese to English using facebook/mbart-large-50-many-to-many-mmt."""
-        model_name = "facebook/mbart-large-50-many-to-many-mmt"
-        model = MBartForConditionalGeneration.from_pretrained(model_name)
-        tokenizer = MBart50TokenizerFast.from_pretrained(model_name)
+        model = self._translator_mbart
+        tokenizer = self._tokenizer_mbart
 
         tokenizer.src_lang = "ja_XX" 
         tokenizer.tgt_lang = "en_XX" 
@@ -81,52 +122,37 @@ class Models:
     def text_from_image(self, picture: str) -> str:
         """Extract text from an image using Manga OCR."""
         image = PIL.Image.open(picture)
-        inputs = self._ocr_feature_extractor(images=image, return_tensors="pt")
-        outputs = self._ocr_model.generate(**inputs)
-        tokenizer = AutoTokenizer.from_pretrained("kha-white/manga-ocr-base")
+
+        inputs = self._ocr_image_processor_manga_ocr(images=image, return_tensors="pt").pixel_values
+        outputs = self._ocr_model_manga_ocr.generate(inputs)
+        tokenizer = self._ocr_tokenizer_manga_ocr
+
         return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-    #Need to have older version of python to run it
+    #Need to have older version of python to run it and it's very bad
     def text_from_image_got(self, picture: str) -> str:
-      
-        tokenizer = AutoTokenizer.from_pretrained('ucaslcl/GOT-OCR2_0', trust_remote_code=True)
-        model = AutoModel.from_pretrained('ucaslcl/GOT-OCR2_0', trust_remote_code=True, low_cpu_mem_usage=True, use_safetensors=True, pad_token_id=tokenizer.eos_token_id)
+            
+        tokenizer = self._ocr_tokenizer_got
+        model = self._ocr_model_got
         model = model.eval()
 
         output = model.chat(tokenizer, picture, ocr_type='ocr')
 
         return output
-
-    '''
-    def _extract_text_from_image_got(self, picture: str) -> str:
-        """Helper method for extracting text using Tesseract OCR."""
-        image = cv2.imread(picture)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-        temp_file = "temp.png"
-        cv2.imwrite(temp_file, thresh)
-        text = pytesseract.image_to_string(PIL.Image.open(temp_file))
-        os.remove(temp_file)
-        return text
-    '''
+    
     # ================================
     # Kanji to Kana Conversion Methods
     # ================================
 
     def convert_kanji_to_kana_elyza(self, text: str):
-        """
-        Process Kanji text and return Hiragana and Romanji using elyza/Llama-3-ELYZA-JP-8B model.
-        """
+        """Process Kanji text and return Hiragana and Romaji using elyza/Llama-3-ELYZA-JP-8B model."""
 
         System_prompt = (
-            "Convert the given Kanji text to Hiragana and Romanji and return only the result"
-            "First output should be the Hiragana version of the text."
-            "Second output should be Romanji version of the text. No other text should be included."
+            "Output the Kanji text in Hiragana, followed by Latin, with no extra text."
         )
 
-        model_name = "elyza/Llama-3-ELYZA-JP-8B"
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        tokenizer = self._converter_tokenizer_elyza
+        model = self._converter_model_elyza
         model.eval()
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -144,33 +170,33 @@ class Models:
             output_ids = model.generate(
                 token_ids.to(model.device),
                 attention_mask=attention_mask,
-                max_new_tokens=1024,
+                max_new_tokens=512,
                 do_sample=False,
                 top_k=50,
                 top_p=None,
                 temperature=None,
             )
 
-        output = tokenizer.decode(output_ids.tolist()[0][token_ids.size(1):], skip_special_tokens=True) + "}"
-
+        output = tokenizer.decode(output_ids.tolist()[0][token_ids.size(1):], skip_special_tokens=True)
         
+        output = output.split("\n", 1)       
+        hiragana = output[0].strip() 
+        romaji = output[-1].strip() 
 
-        print(output)
-
-        return output
+        return hiragana, romaji
 
     def convert_kanji_to_kana_pykakasi(self, text: str):
 
-        kks = pykakasi.kakasi()
+        kks = self._kakasi
         result = kks.convert(text)
 
-        hiragana = romanji = ""
+        hiragana = romaji = ""
 
         for item in result:
             hiragana += item['hira'] + " "
-            romanji += item['hepburn'] + " "
+            romaji += item['hepburn'] + " "
             
-        return hiragana, romanji
+        return hiragana, romaji
 
     #Requires authentication
     def convert_kana_gemma(self, text: str):
@@ -196,9 +222,9 @@ class Models:
         ]
         
         outputs = pipe(messages, return_full_text=False, max_new_tokens=1024)
-        romanji_response = outputs[0]["generated_text"].strip()
+        romaji_response = outputs[0]["generated_text"].strip()
 
-        return hiragan_response, romanji_response
+        return hiragan_response, romaji_response
 
     # ================================
     # Semantic Comparision
@@ -206,9 +232,8 @@ class Models:
 
     def compare_semantics(self, sentences):
 
-        model_name = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name)
+        tokenizer = self._similarity_tokenizer_minilm
+        model = self._similarity_model_minilm
 
         encoded_input = tokenizer(sentences, padding=True, truncation=True, return_tensors='pt')
         with torch.no_grad():
@@ -243,6 +268,6 @@ class Models:
         similarity_scores = {}
         for i, translated_sentence in enumerate(sentences[1:]):
             similarity_score = self.compare_embeddings(embeddings[0], embeddings[i + 1])  # Compare original (index 0) with each translation
-            similarity_scores[f"Original vs Translation {i+1}"] = similarity_score
+            similarity_scores[f"Original compared to sentence {i+1}"] = similarity_score
 
         return similarity_scores

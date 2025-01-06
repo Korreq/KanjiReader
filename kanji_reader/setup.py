@@ -61,6 +61,7 @@ setup(
         "tiktoken",
         "torchvision",
         "verovio",
+        "accelerate",
     ]
 )
 
