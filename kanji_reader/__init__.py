@@ -7,3 +7,4 @@ This package contains all the necessary modules for the translation application.
 from .models import Models
 from .gui import TranslationApp
 from .history import TranslationHistory
+from .models_tests import TestModels
