@@ -26,26 +26,6 @@ class TestModels(unittest.TestCase):
             print(f"{pair}: {score:.4f}")
     '''
 
-
-
-    #Trash code, left for future reference
-    '''
-    def test_convert_kana(self):
-        test_sentences = [
-            ("漢字のテスト", ("かんじのてすと", "kanji no tesuto")) # Example Kanji -> Kana pair
-        ]
-        
-        for kanji_text, (expected_hiragana, expected_romanji) in test_sentences:
-            hiragana, romanji = self.converter.convert_kana(kanji_text)
-            self.assertEqual(hiragana, expected_hiragana)
-            self.assertEqual(romanji, expected_romanji)    
-
-        similarity_scores = self.converter.compare_with_original(test_sentences)
-        
-        for key, score in similarity_scores.items():
-            self.assertGreater(score, 0.9, f"Expected high similarity for {key}. Got similarity: {score}")
-
-    '''
     '''
     def test_convert(self):
 
