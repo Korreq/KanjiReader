@@ -4,7 +4,7 @@ This package contains all the necessary modules for the translation application.
 - `gui` module: Defines the GUI for the translation application.
 """
 
+from .models_tests import TestModels
 from .models import Models
 from .gui import TranslationApp
 from .history import TranslationHistory
-from .models_tests import TestModels

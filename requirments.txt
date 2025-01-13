@@ -1,7 +1,7 @@
 Rzeczy do zrobienia:
 
 -UTF w inputcie ( O )
--Screen capture jako wycinek okna
+-Screen capture jako wycinek okna ( O )
 -Zapis tłumaczeń do pliku ( O )
 -Wielowątkowość ( X )
 -Kompatybilność z linuxem i windowsem ( O )
