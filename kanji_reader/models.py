@@ -140,7 +140,7 @@ class Models:
         image_processor, model, tokenizer = self.ocr_manga_ocr()
         inputs = image_processor(images=image, return_tensors="pt").pixel_values
         outputs = model.generate(inputs)
-        return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return tokenizer.decode(outputs[0], skip_special_tokens=True).replace(" ","")
 
     def text_from_image_got(self, picture: str) -> str:
         """Extract text from an image using srimanth-d/GOT_CPU."""    

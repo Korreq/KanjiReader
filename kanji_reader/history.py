@@ -10,7 +10,7 @@ class TranslationHistory:
         self.filepath = os.path.join(self.results_folder, filename)
         self.max_entries = max_entries
 
-    def save_translation(self, input_text, translated_text):
+    def save_translation(self, input_text, input_type, translated_text, hiragana_text, romaji_text):
         # If the file exists, load its data; otherwise, start with an empty list
         if os.path.exists(self.filepath):
             with open(self.filepath, "r", encoding="utf-8") as f:
@@ -19,7 +19,11 @@ class TranslationHistory:
             history = []
 
         # Add the new translation entry to the history
-        history.append({"input_text": input_text, "translated_text": translated_text})
+        history.append({
+        "input_text": input_text, "input_type": input_type, 
+        "translated_text": translated_text,
+        "hiragana_text": hiragana_text, "romaji_text": romaji_text,
+        })
 
         # If the number of entries exceeds the limit, remove the oldest one
         if len(history) > self.max_entries:

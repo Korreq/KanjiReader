@@ -1,4 +1,5 @@
 import unittest
+import csv
 from .models import Models
 
 
@@ -19,30 +20,48 @@ class TestModels(unittest.TestCase):
         picture = "files/images/test.png"
         text_from_picture = "どっちでもいいよそんなの！"
 
-        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
-        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
-
+        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
+        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
         translators = {"opus_mt": self.models.translate_text, "small100": self.models.translate_text, "mbart": self.models.translate_text}
         #converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
         converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
 
-        for ocr_name, ocr in ocrs.items():    
-            for translator_name, translator in translators.items():
-                for converter_name, converter in converters.items():
+        # Open the CSV file to save the results
+        with open('files/results/test_results.csv', mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+        
+            # Write the header row
+            writer.writerow(['OCR Method', 'Translator', 'Converter', 'Original Text', 'OCR Text', 'Translated Text', 'Hiragana Text', 'Romaji Text', 'Similarity Score for Original Text', 'Similarity Score for OCR Text', 'Similarity Score for Translated Text', 'Similarity Score for Hiragana Text', 'Similarity Score for Romaji Text'])
 
-                    print(f"\nTesting {ocr_name} -> {translator_name} -> {converter_name}\n")
+            # Iterate through all combinations of OCR, Translator, and Converter
+            for ocr_name, ocr in ocrs.items():    
+                for translator_name, translator in translators.items():
+                    for converter_name, converter in converters.items():
 
-                    text, translated_text, hiragana_text, romaji_text = self.full_stack_run(ocr, translator_name, converter, picture)
+                        # Run the full stack
+                        text, translated_text, hiragana_text, romaji_text = self.full_stack_run(ocr, translator_name, converter, picture)
                     
-                    sentences = [text_from_picture, text, translated_text, hiragana_text, romaji_text]
+                        sentences = [text_from_picture, text, translated_text, hiragana_text, romaji_text]
+                        similarity_scores = self.models.compare_with_original(sentences)
 
-                    similarity_scores = self.models.compare_with_original(sentences)
+                        # Write the results to the CSV file
+                        row = [
+                          ocr_name, 
+                          translator_name, 
+                          converter_name, 
+                          text_from_picture, 
+                          text, 
+                          translated_text, 
+                          hiragana_text, 
+                          romaji_text
+                        ]
+                    
+                        # Add similarity scores to the row
+                        for key, score in similarity_scores.items():
+                            row.append(f"{key}: {score:.4f}")
 
-                    for sentence in sentences:
-                        print(sentence)
-
-                    for key, score in similarity_scores.items():
-                        print(f"{key}: {score:.4f}")
+                        # Write the row to the CSV file
+                        writer.writerow(row)
 
 
 if __name__ == '__main__':
