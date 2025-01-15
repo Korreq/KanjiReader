@@ -29,13 +29,6 @@ r"""
     
     # Then, you can reinstall additional packages for this project by running the install command again
 
-    
-    # Pytesseract is a Python wrapper for Google's Tesseract-OCR Engine, so you will also need to install Tesseract itself 
-    # on your system for pytesseract to work properly.
-
-    Windows: Download the installer from https://github.com/tesseract-ocr/tesseract and add the Tesseract executable to your system's PATH.
-
-    Linux: Install tesseract-ocr package
 """
 from setuptools import setup, find_packages
 

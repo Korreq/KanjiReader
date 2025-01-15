@@ -4,7 +4,7 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk, ImageDraw
 import pyautogui
 
-from .models import Models
+from ..models import Models
 from .history import TranslationHistory
 
 
@@ -128,14 +128,14 @@ class TranslationApp:
         screenshot = pyautogui.screenshot()
         self.root.deiconify()
 
-        screenshot.save("files/images/screenshot.png")
-        cropped_image = self.crop_screenshot_window("files/images/screenshot.png")
+        screenshot.save("data/images/temp/screenshot.png")
+        cropped_image = self.crop_screenshot_window("data/images/temp/screenshot.png")
 
         if cropped_image:
-            cropped_image.save("files/images/screenshot2.png")
+            cropped_image.save("data/images/temp/crop.png")
 
         
-        input_text = self.models.text_from_image_manga_ocr("files/images/screenshot2.png")
+        input_text = self.models.text_from_image_manga_ocr("data/images/temp/crop.png")
         translation = self.models.translate_text(input_text, 'opus_mt')
         hiragana, romaji = self.models.convert_kanji_to_kana_pykakasi(input_text)
 

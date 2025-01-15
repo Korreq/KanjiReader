@@ -2,7 +2,7 @@ import json
 import os
 
 class TranslationHistory:
-    def __init__(self, results_folder="../files/results", filename="translation_history.json", max_entries=1000):
+    def __init__(self, results_folder="../../data/results", filename="translation_history.json", max_entries=1000):
         self.results_folder = os.path.join(os.path.dirname(__file__), results_folder)
         if not os.path.exists(self.results_folder):
             os.makedirs(self.results_folder)
