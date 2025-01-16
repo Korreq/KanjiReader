@@ -1,6 +1,8 @@
 import time
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog
+from tkinter.ttk import Label
+
 from PIL import Image, ImageTk, ImageDraw
 import pyautogui
 
@@ -53,30 +55,12 @@ class TranslationApp:
         self.text_label = tk.Label(self.tab1, text="")
         self.text_label.pack(pady=10)
 
-        self.translation_label = tk.Label(self.tab1, text="")
-        self.translation_label.pack(pady=10)
-
-        self.hiragana_label = tk.Label(self.tab1, text="")
-        self.hiragana_label.pack(pady=10)
-
-        self.romaji_label = tk.Label(self.tab1, text="")
-        self.romaji_label.pack(pady=10)
-
     def setup_image_tab(self):
         upload_button = tk.Button(self.tab2, text="Upload Image", command=self.upload_image)
         upload_button.pack(pady=20)
 
         self.text_photo_label = tk.Label(self.tab2, text="")
         self.text_photo_label.pack(pady=10)
-
-        self.translation_photo_label = tk.Label(self.tab2, text="")
-        self.translation_photo_label.pack(pady=10)
-
-        self.hiragana_photo_label = tk.Label(self.tab2, text="")
-        self.hiragana_photo_label.pack(pady=10)
-
-        self.romaji_photo_label = tk.Label(self.tab2, text="")
-        self.romaji_photo_label.pack(pady=10)
 
     def setup_screenshot_tab(self):
         take_screenshot_button = tk.Button(self.tab3, text="Take Screenshot", command=self.take_screenshot)
@@ -85,42 +69,25 @@ class TranslationApp:
         self.text_screenshot_label = tk.Label(self.tab3, text="")
         self.text_screenshot_label.pack(pady=10)
 
-        self.translation_screenshot_label = tk.Label(self.tab3, text="")
-        self.translation_screenshot_label.pack(pady=10)
-
-        self.hiragana_screenshot_label = tk.Label(self.tab3, text="")
-        self.hiragana_screenshot_label.pack(pady=10)
-
-        self.romaji_screenshot_label = tk.Label(self.tab3, text="")
-        self.romaji_screenshot_label.pack(pady=10)
-
-    def translate_text(self):
-        input_text = self.text_entry.get("1.0", tk.END).strip()
+    def translate(self, label:Label, input_text, input_type:str):
         translation = self.models.translate_text(input_text, 'opus_mt')
         hiragana, romaji = self.models.convert_kanji_to_kana_pykakasi(input_text)
 
-        self.text_label.config(text=f"Text: {input_text}")
-        self.translation_label.config(text=f"Translation: {translation}")
-        self.hiragana_label.config(text=f"Hiragana: {hiragana}")
-        self.romaji_label.config(text=f"Romaji: {romaji}")
+        label.config(text=f"""Text: {input_text} \n Translation: {translation} \n Hiragana: {hiragana} \n Romaji: {romaji}""")
 
         # Save translation to history
-        self.history.save_translation(input_text, "text", translation, hiragana, romaji)
+        self.history.save_translation(input_text, input_type, translation, hiragana, romaji)
+
+    def translate_text(self):
+        input_text = self.text_entry.get("1.0", tk.END).strip()
+        self.translate(self.text_label,input_text, "text")
 
     def upload_image(self):
         file_path = filedialog.askopenfilename()
         if file_path:
             input_text = self.models.text_from_image_manga_ocr(file_path)
-            translation = self.models.translate_text(input_text, 'opus_mt')
-            hiragana, romaji = self.models.convert_kanji_to_kana_pykakasi(input_text)
+            self.translate(self.text_photo_label, input_text, "image")
 
-            self.text_photo_label.config(text=f"Text: {input_text}")
-            self.translation_photo_label.config(text=f"Translation: {translation}")
-            self.hiragana_photo_label.config(text=f"Hiragana: {hiragana}")
-            self.romaji_photo_label.config(text=f"Romaji: {romaji}")
-
-            # Save translation to history
-            self.history.save_translation(input_text, "image", translation, hiragana, romaji)
 
     def take_screenshot(self):
         self.root.iconify()
@@ -136,16 +103,7 @@ class TranslationApp:
 
         
         input_text = self.models.text_from_image_manga_ocr("data/images/temp/crop.png")
-        translation = self.models.translate_text(input_text, 'opus_mt')
-        hiragana, romaji = self.models.convert_kanji_to_kana_pykakasi(input_text)
-
-        self.text_screenshot_label.config(text=f"Text: {input_text}")
-        self.translation_screenshot_label.config(text=f"Translation: {translation}")
-        self.hiragana_screenshot_label.config(text=f"Hiragana: {hiragana}")
-        self.romaji_screenshot_label.config(text=f"Romaji: {romaji}")
-
-        # Save translation to history
-        self.history.save_translation(input_text, "capture", translation, hiragana, romaji)
+        self.translate(self.text_screenshot_label, input_text, "screenshot")
 
     def crop_screenshot_window(self, image_path: str):
         self.image = Image.open(image_path)
@@ -184,12 +142,19 @@ class TranslationApp:
             if event.x < self.start_x and event.y < self.start_y:
                 self.start_x, self.start_y = event.x, event.y
             else:
-                if event.x < self.start_x:
-                    self.start_x, self.rect[3] = event.x, event.y
-                elif event.y < self.start_y:
-                    self.start_y, self.rect[2] = event.y, event.x
+                if event.x <= self.start_x:
+                    self.start_x = event.x
+                elif event.x <= self.start_x + ((self.rect[2] - self.start_x) // 2):
+                    self.start_x = event.x
                 else:
-                    self.rect[2], self.rect[3] = event.x, event.y  # Set the bottom-right corner
+                    self.rect[2] = event.x
+                if event.y <= self.start_y:
+                    self.start_y = event.y
+                elif event.y <= self.start_y + ((self.rect[3] - self.start_y) // 2):
+                    self.start_y = event.y
+                else:
+                    self.rect[3] = event.y
+
 
         self.draw_rectangle()  # Redraw the rectangle
 
