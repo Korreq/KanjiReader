@@ -34,28 +34,26 @@ from setuptools import setup, find_packages
 
 setup(
     name="kanji_reader",
-    version="0.2",
+    version="0.3",
+    python_requires=">=3.12,<3.13",
     packages=find_packages(),
     install_requires=[
-        "transformers",  # NLP model
-        "torch",  # Deep learning framework
-        "sentencepiece",  # Tokenization library
-        "sacremoses",  # Preprocessing utilities
-        "pillow",  # Image processing library
-        "pyautogui",  # GUI automation
-        "tk",  # GUI toolkit
-        "opencv-python", # Image processing library
-        "pytesseract", # Optical character recognition
-        "protobuf", # Protocol buffers
-        "fugashi",
-        "unidic-lite",
-        "scikit-learn", # Only for testing
-        "pykakasi",
-        "tiktoken",
-        "torchvision",
-        "verovio",
-        "accelerate",
-        "behave"
+        "transformers==4.47.0",  
+        "torch==2.5.1",
+        "sentencepiece==0.2.0",  
+        "sacremoses==0.1.1",
+        "pillow==11.0.0",  
+        "pyautogui==0.9.54",  
+        "protobuf==5.29.2",  
+        "fugashi==1.4.0",
+        "unidic-lite==1.0.8",
+        "scikit-learn==1.6.0", 
+        "pykakasi==2.3.0",
+        "tiktoken==0.8.0",
+        "torchvision==0.20.1",
+        "verovio==4.5.1",
+        "accelerate==1.2.1",
+        "behave==1.2.6" 
     ]
 )
 

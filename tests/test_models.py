@@ -20,9 +20,16 @@ class TestModels(unittest.TestCase):
         return text, translated_text, hiragana_text, romaji_text
 
     def test_translation_from_image(self):
-        pictures = {"どっちでもいいよそんなの！": "data/images/test/test.png"}
-        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
-        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
+        pictures = {
+            "俺が外国でひろってしまってなんだかわからないうちに": "data/images/test/test1.png",
+            "おわびに花火大会で色々かってやるぞ！？わたあめとか！たこやきとか！きんぎょすくい！ああ　いいぞ　金魚すくいな！？": "data/images/test/test2.png",
+            "学校のパソコンで作ってプリントアウトしてそれにおイモのハンコを押したの": "data/images/test/test3.png",
+            "よしじゃあゾウ見ながら弁当食うかー　そこの木影で": "data/images/test/test4.png",
+            "そーゆー大そうなのはいなかったとおもうなぁ": "data/images/test/test5.png",
+            "あれ？ひまわりって太陽の方むくんじゃなかったっけ？": "data/images/test/test6.png",
+        }
+        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
+        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
         translators = {"opus_mt": self.models.translate_text, "small100": self.models.translate_text, "mbart": self.models.translate_text}
         #converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
         converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
@@ -34,7 +41,7 @@ class TestModels(unittest.TestCase):
             # Write the header row
             writer.writerow([
                 'Original Text', 'OCR Method', 'Translator', 'Converter', 'OCR Text', 'Translated Text', 
-                'Hiragana Text', 'Romaji Text', 'Similarity Score for Original Text', 'Similarity Score for OCR Text', 
+                'Hiragana Text', 'Romaji Text', 'Similarity Score for OCR Text', 
                 'Similarity Score for Translated Text', 'Similarity Score for Hiragana Text', 'Similarity Score for Romaji Text'
             ])
 
@@ -64,7 +71,7 @@ class TestModels(unittest.TestCase):
                     
                             # Add similarity scores to the row
                             for key, score in similarity_scores.items():
-                                row.append(f"{key}: {score:.4f}")
+                                row.append(f"{score:.4f}")
 
                             # Write the row to the CSV file
                             writer.writerow(row)

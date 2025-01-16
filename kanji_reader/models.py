@@ -58,8 +58,8 @@ class Models:
             'translator', 'small100', M2M100ForConditionalGeneration, M2M100Tokenizer, "alirezamsh/small100"
         )
         tokenizer = model[1]
-        # Set target language for the tokenizer here
-        tokenizer.tgt_lang = "en"  # Set the target language here
+        # Set target language for the tokenizer
+        tokenizer.tgt_lang = "en" 
         return model[0], tokenizer
 
     def translator_mbart(self):
@@ -68,7 +68,6 @@ class Models:
             'translator', 'mbart', MBartForConditionalGeneration, MBart50TokenizerFast, "facebook/mbart-large-50-many-to-many-mmt"
         )
         tokenizer = model[1]
-        # Set source and target language for the tokenizer
         tokenizer.src_lang = "ja_XX"  # Set the source language to Japanese
         tokenizer.tgt_lang = "en_XX"  # Set the target language to English
         return model[0], tokenizer
@@ -146,8 +145,8 @@ class Models:
         """Extract text from an image using srimanth-d/GOT_CPU."""    
         model, tokenizer = self.ocr_got()
 
-        inputs = tokenizer(picture, return_tensors="pt", padding=True, truncation=True)
-        inputs["attention_mask"] = (inputs["input_ids"] != model.config.pad_token_id).long()
+        #inputs = tokenizer(picture, return_tensors="pt", padding=True, truncation=True)
+        #inputs["attention_mask"] = (inputs["input_ids"] != model.config.pad_token_id).long()
 
         return model.chat(tokenizer, picture, ocr_type='ocr')
 
@@ -201,7 +200,7 @@ class Models:
         """Compare the embeddings of all translations with the original text."""
         embeddings = self.compare_semantics(sentences)
         similarity_scores = {
-            f"Original compared to sentence {i+1}": self.compare_embeddings(embeddings[0], emb)
+            f"Sentence {i+1}": self.compare_embeddings(embeddings[0], emb)
             for i, emb in enumerate(embeddings[1:])
         }
         return similarity_scores
