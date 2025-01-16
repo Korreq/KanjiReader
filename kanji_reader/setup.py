@@ -55,6 +55,7 @@ setup(
         "torchvision",
         "verovio",
         "accelerate",
+        "behave"
     ]
 )
 
