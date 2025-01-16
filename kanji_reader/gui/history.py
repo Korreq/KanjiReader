@@ -32,3 +32,12 @@ class TranslationHistory:
         # Save the updated history back to the file
         with open(self.filepath, "w", encoding="utf-8") as f:
             json.dump(history, f, indent=4, ensure_ascii=False)
+
+    def get_translation(self):
+        if os.path.exists(self.filepath):
+            with open(self.filepath, "r", encoding="utf-8") as f:
+                history = json.load(f)
+        else:
+            history = []
+
+        return history
