@@ -53,7 +53,9 @@ setup(
         "torchvision==0.20.1",
         "verovio==4.5.1",
         "accelerate==1.2.1",
-        "behave==1.2.6" 
+        "behave==1.2.6", 
+        "opencv-python==4.11.0.86",
+        "easyocr"
     ]
 )
 

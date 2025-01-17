@@ -164,4 +164,5 @@ cython_debug/
 
 screenshot.png
 crop.png
+*_with_bounding_boxes.png
 results/

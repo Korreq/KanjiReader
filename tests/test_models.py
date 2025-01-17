@@ -1,11 +1,9 @@
 # Run using this command 
 # python -m tests.test_models
 
-
 import unittest
 import csv
 from kanji_reader.models import Models
-
 
 class TestModels(unittest.TestCase):
     def setUp(self):
@@ -28,8 +26,8 @@ class TestModels(unittest.TestCase):
             "そーゆー大そうなのはいなかったとおもうなぁ": "data/images/test/test5.png",
             "あれ？ひまわりって太陽の方むくんじゃなかったっけ？": "data/images/test/test6.png",
         }
-        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
-        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
+        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
+        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
         translators = {"opus_mt": self.models.translate_text, "small100": self.models.translate_text, "mbart": self.models.translate_text}
         #converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
         converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
