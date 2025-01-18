@@ -5,7 +5,7 @@ Rzeczy do zrobienia:
 -Zapis tłumaczeń do pliku ( O )
 -Wielowątkowość ( X )
 -Kompatybilność z linuxem i windowsem ( O )
--Historia tłumaczeń
--Zmienienie modeli, aby każdy był z transformersów ( O )
+-Historia tłumaczeń ( O )
+-Zmienienie modeli, aby każdy był z transformersów ( O / X )
 -Zwracanie paru prawdopodobnych tłumaczeń/przełożeń ( X )
 

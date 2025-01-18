@@ -52,12 +52,9 @@ class KanaConversionModels:
                 top_k=50
             )
 
-        output = tokenizer.decode(output_ids[0], skip_special_tokens=True).split("\n", 1)
+        output = tokenizer.decode(output_ids[0], skip_special_tokens=True).strip().split("\n")
 
-        print( output ) 
-
-
-        return output[0].strip(), output[-1].strip()
+        return output[-2].strip(), output[-1].strip()
 
     def convert_kanji_to_kana_pykakasi(self, text: str):
         """Convert Kanji text to Hiragana and Romaji using pykakasi."""
