@@ -50,6 +50,13 @@ class TranslationApp:
         self.setup_screenshot_tab()
         self.setup_history_tab()
 
+        tab_control.bind("<<NotebookTabChanged>>", self.on_tab_changed)
+
+    def on_tab_changed(self, event):
+        selected_tab = event.widget.select()
+        if selected_tab == str(self.tab4):  # History Tab selected
+            self.refresh_history_list()
+
     def setup_text_tab(self):
         self.text_entry = tk.Text(self.tab1, height=10, width=50)
         self.text_entry.pack(pady=10)
@@ -75,26 +82,6 @@ class TranslationApp:
         self.text_screenshot_label.pack(pady=10)
 
     def setup_history_tab(self):
-        '''history_name_label = tk.Label(self.tab4, text="History", anchor="center")
-        history_name_label.pack(pady=10)
-
-        scrollbar = tk.Scrollbar(self.tab4, orient=tk.VERTICAL)
-        scrollbar.pack(side=tk.LEFT, fill=tk.Y)
-
-        self.history_label = tk.Label(self.tab4,
-                                      text="Click on item in list to show more information about translation")
-        self.history_label.pack(pady=10, side=tk.RIGHT, fill=tk.BOTH, anchor="center")
-
-        history_list = tk.Listbox(self.tab4, height=5, yscrollcommand=scrollbar.set)
-        for translation in self.history.get_translation():
-            history_list.insert("end", translation["input_text"])
-
-
-        history_list.pack(side=tk.LEFT, fill=tk.BOTH)
-        scrollbar.config(command=history_list.yview)'''
-        # Update history
-        self.history = self.history_Handler.get_translation()
-
         # History Name Label
         history_name_label = tk.Label(self.tab4, text="History", anchor="center")
         history_name_label.pack(pady=10)
@@ -107,12 +94,13 @@ class TranslationApp:
         scrollbar = tk.Scrollbar(history_frame, orient=tk.VERTICAL)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y)
 
-        history_list = tk.Listbox(history_frame, height=5, yscrollcommand=scrollbar.set)
-        for translation in self.history_Handler.get_translation():
-            history_list.insert("end", translation["input_text"])
+        self.history_list = tk.Listbox(history_frame, height=5, yscrollcommand=scrollbar.set)
+        self.history = self.history_Handler.get_translation()
+        for translation in self.history:
+            self.history_list.insert("end", translation["input_text"])
+        self.history_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        history_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=history_list.yview)
+        scrollbar.config(command=self.history_list.yview)
 
         # Create the history label on the right side of the listbox
         self.history_label = tk.Label(history_frame,
@@ -120,11 +108,25 @@ class TranslationApp:
         self.history_label.pack(side=tk.RIGHT, padx=10, fill=tk.BOTH, expand=True)
 
         # Bind listbox item selection to an event handler
-        history_list.bind("<<ListboxSelect>>", lambda event: self.on_item_selected(history_list))
+        self.history_list.bind("<<ListboxSelect>>", lambda event: self.on_item_selected())
 
-    def on_item_selected(self, history_list):
+        # Initial population of the history list
+        self.refresh_history_list()
+
+
+    def refresh_history_list(self):
+        # Clear current history listbox content
+        self.history_list.delete(0, tk.END)
+
+        # Get updated history and populate listbox
+        self.history = self.history_Handler.get_translation()
+        for translation in self.history:
+            self.history_list.insert("end", translation["input_text"])
+
+
+    def on_item_selected(self):
         # Get selected index from the listbox
-        selected_index = history_list.curselection()
+        selected_index = self.history_list.curselection()
 
         if selected_index:
             # Get the translation at the selected index
@@ -137,9 +139,6 @@ class TranslationApp:
                                       f"Translation: {selected_translation["translated_text"]}\n"
                                       f"Hiragana: {selected_translation["hiragana_text"]}\n"
                                       f"Romaji: {selected_translation["romaji_text"]}\n")
-
-    def change_history_label(self, translation):
-        self.history_label.config(text=translation["input_text"])
 
     def translate(self, label:Label, input_text, input_type:str):
         translation = self.models.translate_text(input_text, 'opus_mt')

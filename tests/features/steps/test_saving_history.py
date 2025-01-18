@@ -1,7 +1,6 @@
 # features/steps/test_saving_history.py
 from behave import given, when, then
 from kanji_reader.gui import TranslationHistory
-import os
 import json
 
 @given('I have a history with a record limit of {limit} entries')
@@ -11,7 +10,7 @@ def step_impl(context, limit):
 @given('the history file already has {count} entries')
 def step_impl(context, count):
     with open(context.history.filepath, 'w') as f:
-        history = [{'input_text': f'Entry {i}'} for i in range(int(count))]
+        history = [{'input_text': f'Entry {i}'} for iq in range(int(count))]
         json.dump(history, f)
 
 @when('I save the history')
