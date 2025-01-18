@@ -24,28 +24,39 @@ class BoundingBoxDrawer:
         # Merge overlapping boxes based on axis-aligned bounding rectangles
         bounding_boxes = self.merge_overlapping_boxes(bounding_boxes)
 
+        # Sort the bounding boxes from right to left and then top to bottom
+        bounding_boxes = self.sort_bounding_boxes(bounding_boxes)
+
         return bounding_boxes
 
     def merge_overlapping_boxes(self, bounding_boxes):
-        """Merges overlapping bounding boxes."""
-        merged_boxes = []
-        
-        for box in bounding_boxes:
-            points = np.array(box, dtype=np.int32) 
-            found_overlap = False 
-        
-            for i, merged_box in enumerate(merged_boxes): 
-                merged_points = np.array(merged_box, dtype=np.int32) 
+        """Merges overlapping and encapsulated bounding boxes.""" 
+        while True: 
+            merged_boxes = [] 
+            merge_occurred = False 
+            
+            for box in bounding_boxes: 
+                points = np.array(box, dtype=np.int32) 
+                found_overlap = False 
                 
-                if self.is_overlapping(points, merged_points) or self.is_contained(points, merged_points): 
-                    merged_box = self.merge_two_boxes(points, merged_points) 
-                    merged_boxes[i] = merged_box 
-                    found_overlap = True 
-                    break
+                for i, merged_box in enumerate(merged_boxes): 
+                    merged_points = np.array(merged_box, dtype=np.int32) 
+                    
+                    if self.is_overlapping(points, merged_points) or self.is_contained(points, merged_points): 
+                        merged_box = self.merge_two_boxes(points, merged_points) 
+                        merged_boxes[i] = merged_box 
+                        found_overlap = True 
+                        merge_occurred = True 
+                        break 
+                    
+                if not found_overlap: 
+                    merged_boxes.append(box) 
+            
+            bounding_boxes = merged_boxes 
 
-            if not found_overlap: 
-                merged_boxes.append(box) 
-
+            if not merge_occurred: 
+                break 
+            
         return merged_boxes
 
     def is_overlapping(self, box1, box2):
@@ -62,10 +73,10 @@ class BoundingBoxDrawer:
 
         # Check if any point of box1 is inside box2
         for point in box1:
-            if cv2.pointPolygonTest(box2_points, (float(point[0]), float(point[1])), measureDist=False) >= 0:
-                return True
+            if cv2.pointPolygonTest(box2_points, (float(point[0]), float(point[1])), measureDist=False) < 0:
+                return False
 
-        return False
+        return True
 
     def merge_two_boxes(self, box1, box2):
         """Merge two overlapping or contained boxes into one."""
@@ -74,6 +85,17 @@ class BoundingBoxDrawer:
         merged_box = cv2.boxPoints(merged_rect)  # Get the corner points of the merged rectangle
         merged_box = np.array(merged_box, dtype=np.int32)  # Convert points to integer (using np.int32)
         return merged_box
+
+    def sort_bounding_boxes(self, bounding_boxes): 
+        """Sorts bounding boxes from right to left and then top to bottom.""" 
+        # Calculate the centroid of each bounding box 
+        centroids = [np.mean(box, axis=0) for box in bounding_boxes] 
+        
+        # Sort primarily by the x-coordinate (right to left) and secondarily by the y-coordinate (top to bottom) 
+        sorted_indices = sorted(range(len(centroids)), key=lambda i: (-centroids[i][0], centroids[i][1]))
+        
+        return [bounding_boxes[i] for i in sorted_indices]
+
 
     def draw_bounding_boxes(self, bounding_boxes):
         """Draw bounding boxes on the image."""

@@ -55,7 +55,7 @@ setup(
         "accelerate==1.2.1",
         "behave==1.2.6", 
         "opencv-python==4.11.0.86",
-        "easyocr"
+        "easyocr==1.7.2"
     ]
 )
 

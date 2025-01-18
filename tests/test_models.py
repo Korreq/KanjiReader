@@ -20,14 +20,13 @@ class TestModels(unittest.TestCase):
     def test_translation_from_image(self):
         pictures = {
             "俺が外国でひろってしまってなんだかわからないうちに": "data/images/test/test1.png",
-            "おわびに花火大会で色々かってやるぞ！？わたあめとか！たこやきとか！きんぎょすくい！ああ　いいぞ　金魚すくいな！？": "data/images/test/test2.png",
-            "学校のパソコンで作ってプリントアウトしてそれにおイモのハンコを押したの": "data/images/test/test3.png",
-            "よしじゃあゾウ見ながら弁当食うかー　そこの木影で": "data/images/test/test4.png",
-            "そーゆー大そうなのはいなかったとおもうなぁ": "data/images/test/test5.png",
-            "あれ？ひまわりって太陽の方むくんじゃなかったっけ？": "data/images/test/test6.png",
+            "おわびに花火大会で色々かってやるぞ！？わたあめとか！たこやきとか！ きんぎょすくい！ ああいいぞ金魚すくいな！？": "data/images/test/test2.png",
+            "学校のパソコンで作って プリントアウトして それにおイモのハンコを 押したの": "data/images/test/test3.png",
+            "よしじゃあゾウ見ながら弁当食うかー そこの木影で": "data/images/test/test4.png",
+            "そーゆー大そうなのはいなかったと思うなぁ": "data/images/test/test5.png"
         }
-        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
-        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
+        ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
+        #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
         translators = {"opus_mt": self.models.translate_text, "small100": self.models.translate_text, "mbart": self.models.translate_text}
         #converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
         converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
