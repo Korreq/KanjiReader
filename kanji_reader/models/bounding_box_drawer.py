@@ -95,10 +95,10 @@ class BoundingBoxDrawer:
         sorted_indices = sorted(range(len(centroids)), key=lambda i: (-centroids[i][0], centroids[i][1]))
         
         return [bounding_boxes[i] for i in sorted_indices]
+ 
+    def save_image_with_bounding_boxes(self, output_filename: str, bounding_boxes):
+        """Draw bounding boxes on the image and save."""
 
-
-    def draw_bounding_boxes(self, bounding_boxes):
-        """Draw bounding boxes on the image."""
         for box in bounding_boxes:
             # Unpack the four corners of the rotated bounding box
             points = np.array(box, dtype=np.int32)
@@ -108,10 +108,8 @@ class BoundingBoxDrawer:
             
             # Draw the rotated rectangle using polylines
             cv2.polylines(self.image, [points], isClosed=True, color=(0, 255, 0), thickness=2) 
-            
-        return self.image
-    
-    def save_image(self, output_filename: str):
-        """Save the image with bounding boxes to a file."""
+
         cv2.imwrite(output_filename, self.image)
         print(f"Image saved as: {output_filename}")
+
+        

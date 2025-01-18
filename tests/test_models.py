@@ -28,8 +28,8 @@ class TestModels(unittest.TestCase):
         ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr, "got": self.models.text_from_image_got}
         #ocrs = {"manga_ocr": self.models.text_from_image_manga_ocr}
         translators = {"opus_mt": self.models.translate_text, "small100": self.models.translate_text, "mbart": self.models.translate_text}
-        #converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
-        converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
+        converters = {"elyza": self.models.convert_kanji_to_kana_elyza, "pykakasi": self.models.convert_kanji_to_kana_pykakasi}
+        #converters = {"pykakasi": self.models.convert_kanji_to_kana_pykakasi}
 
         # Open the CSV file to save the results
         with open('data/results/test_results.csv', mode='w', newline='', encoding='utf-8') as file:
